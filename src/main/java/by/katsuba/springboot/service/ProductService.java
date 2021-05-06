@@ -6,9 +6,10 @@ import by.katsuba.springboot.model.Product;
 import by.katsuba.springboot.repository.CategoryRepository;
 import by.katsuba.springboot.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ProductService {
@@ -16,30 +17,20 @@ public class ProductService {
     private ProductRepository productRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    private Set<String> sortSet = new HashSet<>(Arrays.asList("brand", "model", "price"));
 
-    public Iterable<Product> getAllProducts(String sort, String order) {
-        switch (sort) {
-            case "brand":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByBrandDesc(0L);
-                }
-                return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByBrand(0L);
-            case "model":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByModelDesc(0L);
-                }
-                return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByModel(0L);
-            case "price":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByPriceDesc(0L);
-                }
-                return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThanOrderByPrice(0L);
-            default:
-                return productRepository.findAllByPriceNotNullAndStockStockValueGreaterThan(0L);
+    public List<Product> getAllProducts(String sort, String order) {
+        Sort.Direction direction = order.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        List<Product> resultList;
+        if (sortSet.contains(sort)) {
+            resultList = productRepository.findAllByPriceNotNullAndStockStockValueGreaterThan(0L, Sort.by(direction, sort));
+        } else {
+            resultList = productRepository.findAllByPriceNotNullAndStockStockValueGreaterThan(0L);
         }
+        return resultList;
     }
 
-    public Iterable<Category> getAllCategories() {
+    public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
@@ -51,26 +42,15 @@ public class ProductService {
         throw new ProductNotFoundException(id);
     }
 
-    public Iterable<Product> getProductsByCategory(String categoryName, String sort, String order) {
+    public List<Product> getProductsByCategory(String categoryName, String sort, String order) {
         Category category = categoryRepository.getCategoryByName(categoryName);
-        switch (sort) {
-            case "brand":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByBrandDesc(category, 0L);
-                }
-                return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByBrand(category, 0L);
-            case "model":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByModelDesc(category, 0L);
-                }
-                return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByModel(category, 0L);
-            case "price":
-                if (order.equals("desc")) {
-                    return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByPriceDesc(category, 0L);
-                }
-                return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThanOrderByPrice(category, 0L);
-            default:
-                return productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThan(category, 0L);
+        Sort.Direction direction = order.equals("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        List<Product> resultList;
+        if (sortSet.contains(sort)) {
+            resultList = productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThan(category, 0L, Sort.by(direction, sort));
+        } else {
+            resultList = productRepository.findAllByCategoryAndPriceNotNullAndStockStockValueGreaterThan(category, 0L);
         }
+        return resultList;
     }
 }
